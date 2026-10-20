@@ -277,4 +277,36 @@ describe('the user guide’s reviewed claims match the code', () => {
     expect(screenplay).toContain(`It lists ${labels.slice(0, -1).map((label) => `**${label}**`).join(', ')} and **${labels.at(-1)}**,`);
     expect(guide).toMatch(/\| Ctrl\+E \| On a screenplay's Source tab, open the element menu for the caret's line\. \|/);
   });
+
+  it('pins the screenplay keyboard shortcut table and claims to the view, element menu and radio keys', () => {
+    const view = read('apps/desktop/src/media/ScreenplayView.tsx');
+    const menu = read('apps/desktop/src/media/element-menu.ts');
+    const radio = read('apps/desktop/src/components/radio-keys.ts');
+    const shared = read('apps/desktop/src/components/shared.tsx');
+
+    // Section header exists in the screenplay section
+    expect(guide).toContain('### Screenplay keyboard shortcuts');
+
+    // Cmd variants on macOS: opensElementMenu supports metaKey (Cmd) as well as ctrlKey
+    expect(menu).toContain('event.ctrlKey || event.metaKey');
+    expect(guide).toMatch(/\| Ctrl\+E \| Cmd\+E \| Source tab \| Open the element menu for the line the caret is on\. \|/);
+
+    // 1-9 digit mapping: element-menu assigns shortcuts "1" through "9" to the 9 element types
+    expect(menu).toContain('shortcut: String(index + 1)');
+    for (let i = 1; i <= 9; i++) {
+      expect(guide).toMatch(new RegExp(`\\| ${i} \\| ${i} \\| Element menu open \\|`));
+    }
+
+    // Space applies the selected element: Menu allows Enter or Space to choose an item
+    expect(shared).toContain('Arrow keys move, Enter or Space chooses');
+    expect(guide).toMatch(/\| Enter, Space \| Return, Space \| Element menu open \| Apply the selected element conversion\. \|/);
+
+    // View-switcher arrows and Home/End: ScreenplayView passes events to radioStep, which handles Left, Right, Up, Down, Home, End
+    expect(view).toContain('radioStep(MODES, mode, event.key)');
+    expect(radio).toContain("key === 'ArrowRight' || key === 'ArrowDown'");
+    expect(radio).toContain("key === 'ArrowLeft' || key === 'ArrowUp'");
+    expect(radio).toContain("key === 'Home'");
+    expect(radio).toContain("key === 'End'");
+    expect(guide).toMatch(/\| Left, Right, Up, Down, Home, End \| Left, Right, Up, Down, Home, End \| Scene view switcher \|/);
+  });
 });
